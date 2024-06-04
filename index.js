@@ -2,18 +2,20 @@ const express = require('express')
 const { MongoClient } = require('mongodb')
 
 //Preparamos a informações de acesso ao banco de dados
-const dbUrl = 'mongodb+srv://admin:CsJsRjADMINadmincj@cluster0.wudndpr.mongodb.net'
+const dbUrl = 'mongodb+srv://admin:KJs1m29sja09aKjm437A@cluster0.ffwvg9l.mongodb.net'
 const dbName = 'mongodb-intro-e-implementacao'
 
 //declaramos a função main()
 async function main() {
   //realizamos a conexão com banco de dados
-  const client = new MongoClient(dbUrl)
+  const client = new MongoClient (dbUrl)
+
   console.log('conectado ao banco de dados...')
+
   await client.connect()
   console.log('Banco de dados conectado com sucesso!')
 
-  const db = client.db(dbName)
+  
 
   const collection = db.collection('personagem')
 
@@ -29,6 +31,7 @@ async function main() {
   //Endpoint Read All [GET] /personagem
 
   app.get('/personagem', async function (req, res) {
+
     //Acessamos a lista de itens na collection no MongoDB
     const itens = await collection.find().toArray()
 
@@ -38,6 +41,7 @@ async function main() {
 
   //Endpoint Real By ID [GET]/personagem/:id
   app.get('/personagem/:id', function (req, res) {
+
     //Acessamos o parâmetro de rota ID
     const id = req.params.id
     //Acessar o item na lista usando ID - 1
