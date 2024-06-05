@@ -1,22 +1,21 @@
 const express = require('express')
-const { MongoClient } = require('mongodb')
+const { MongoClient, ObjectId } = require('mongodb')
 
 //Preparamos a informações de acesso ao banco de dados
-const dbUrl = 'mongodb+srv://admin:KJs1m29sja09aKjm437A@cluster0.ffwvg9l.mongodb.net'
-const dbName = 'mongodb-intro-e-implementacao'
-
+const dbUrl = 'mongodb+srv://admin:52XeRKHKIzybbHA8@cluster0.wudndpr.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0'
+const dbName = 'projetoback'
 //declaramos a função main()
 async function main() {
   //realizamos a conexão com banco de dados
-  const client = new MongoClient (dbUrl)
+  const client = new MongoClient(dbUrl)
 
   console.log('conectado ao banco de dados...')
 
   await client.connect()
   console.log('Banco de dados conectado com sucesso!')
 
-  
 
+  const db = client.db(dbName)
   const collection = db.collection('personagem')
 
 
@@ -40,12 +39,15 @@ async function main() {
   })
 
   //Endpoint Real By ID [GET]/personagem/:id
-  app.get('/personagem/:id', function (req, res) {
+  app.get('/personagem/:id', async function (req, res) {
 
     //Acessamos o parâmetro de rota ID
     const id = req.params.id
-    //Acessar o item na lista usando ID - 1
-    const item = lista[id - 1]
+
+
+    //Acessar o item na colletion usando o ID
+    const item = await collection.findOne({ _id: new ObjectId(id) })
+
     //checamos se o item obtido é existente
     if (!item) {
       return res.status(408).send('Item não encontrado')
@@ -55,72 +57,74 @@ async function main() {
 
   //Sinalizo ao express que estamos usando JSON no body
   app.use(express.json())
-  // Endipoint CREATE [POST]/personagem
-  app.post('/personagem', function (req, res) {
-    //  Acessamos o BODY da Requisição
-    const body = req.body
 
-    //Acessamos a propriedade 'nome' do body
-    const novoItem = body.nome
-    //checar se o 'nome' está presente no body
-    if (!novoItem) {
+  // Endipoint CREATE [POST]/personagem
+  app.post('/personagem', async function (req, res) {
+    //  Acessamos o BODY da Requisição
+    const novoItem = req.body
+
+    // checar se o 'nome' está presente no body
+    if (!novoItem || !novoItem.nome) {
       return res.status(400).send('corpo de requisicão deve conter a propriedade `nome`.')
     }
-    //Checar se o novo item está na lista ou não
-    if (lista.includes(novoItem)) {
-      return res.status(409).send('Esse item ja está na lista')
-    }
+    // Checar se o novo item está na lista ou não
+    // if (lista.includes(novoItem)) {
+    //   return res.status(409).send('Esse item ja está na lista')
+    // }
 
 
-    //Adicionamos na lista
-    lista.push(novoItem)
+    //Adicionamos na collection
+    await collection.insertOne(novoItem)
 
     //Exibimos uma mensagem de sucesso
-    res.status(201).send('Item adicionado com sucesso:' + novoItem)
+    res.status(201).send(novoItem)
 
   })
 
   //Endpoint Update [PUT]/personagem/:id
-  app.put('/personagem/:id', function (req, res) {
+  app.put('/personagem/:id', async function (req, res) {
     const id = req.params.id
     //checamos se o id - 1 está na lista, exibindo 
     //mensagem caso o item não esteja
-    if (!lista[id - 1]) {
-      return res.status(408).send('Item não encontrado')
-    }
-    //Acessamos o body da requisicão
+    // if (!lista[id - 1]) {
+    //   return res.status(408).send('Item não encontrado')
+    // }
+    // Acessamos o body da requisicão
     const body = req.body
 
-    //acessamos a proriedade 'nome' do body
-    const novoItem = body.nome
+
     //checar se o 'nome' está presente no body
-    if (!novoItem) {
+    if (!novoItem || !novoItem.nome) {
       return res.status(400).send('corpo de requisicão deve conter a propriedade `nome`.')
     }
-    //Checar se o novo item está na lista ou não
-    if (lista.includes(novoItem)) {
-      return res.status(409).send('Esse item ja está na lista')
-    }
-    //Atualizamos na lista o novoItem pelo id - 1
-    lista[id - 1] = novoItem
+    // //Checar se o novo item está na lista ou não
+    // if (lista.includes(novoItem)) {
+    //   return res.status(409).send('Esse item ja está na lista')
+    // }
+    //Atualizamos na collection o novoItem pelo id
+    await collection.updateOne(
+      { _id: new ObjectId(id) },
+      { $set: novoItem }
+    )
+
     //Enviamos mensagem de sucesso
-    res.send('Item atualizado com sucesso:' + id + '-' + novoItem)
+    res.send(novoItem)
 
   })
 
   //Endpoint DELETE[DELETE]   /personagem/:id
-  app.delete('/personagem/:id', function (req, res) {
+  app.delete('/personagem/:id', async function (req, res) {
 
     //Acessamos o parâmetro de rota
     const id = req.params.id
 
     //checamos se o id - 1 está na lista, exibindo 
     //mensagem caso o item não esteja
-    if (!lista[id - 1]) {
-      return res.status(408).send('Item não encontrado')
-    }
+    // if (!lista[id - 1]) {
+    //   return res.status(408).send('Item não encontrado')
+    // }
     //Remover o item da lista usando o id-1
-    delete lista[id - 1]
+    await collection.deleteOne({ _id: new ObjectId(id) })
     //Enviamos uma mensagem de sucesso
     res.send('Item removido com sucesso:' + id)
   })
